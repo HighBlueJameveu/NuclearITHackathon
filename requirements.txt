@@ -3,3 +3,4 @@ pandas
 scikit-learn
 rdkit
 joblib
+chembl_webresource_client
