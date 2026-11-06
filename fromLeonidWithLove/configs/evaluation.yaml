@@ -1,0 +1,17 @@
+data:
+  train_csv: data/sample/train.csv
+  test_csv:  data/sample/test.csv
+  smiles_col: smiles
+  target_col: si
+  id_col: id
+
+model:
+  type: dummy         
+  constant: 5.0
+
+target:
+  log1p: false
+
+output:
+  metrics_json: reports/cv_metrics.json
+  submission_csv: submissions/submission.csv
