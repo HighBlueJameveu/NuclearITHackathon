@@ -1,0 +1,9 @@
+{
+  "mode":"ensemble 12 seeds + weight=2.5 + robust external",
+  "train_rows_total":519,
+  "eval_rows_competition":320,
+  "RMSE_log10(1+SI)":0.7073129679,
+  "MAE_log10(1+SI)":0.5329376825,
+  "MAE_SI":209.2783061681,
+  "Spearman":0.5632369353
+}

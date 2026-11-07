@@ -1,0 +1,9 @@
+{
+  "mode":"ensemble 7 seeds + weight=2.5 + strain\/Culture",
+  "train_rows_total":320,
+  "eval_rows_competition":320,
+  "RMSE_log10(1+SI)":0.7200705757,
+  "MAE_log10(1+SI)":0.5429749581,
+  "MAE_SI":209.8415615068,
+  "Spearman":0.5486753569
+}
