@@ -1,0 +1,8 @@
+{
+  "mode":"two-stage (cls + reg) + strain\/Culture + external",
+  "train_rows_total":320,
+  "eval_rows_competition":320,
+  "cls_AUC":0.5536277603,
+  "MAE_SI":209.8582910322,
+  "Spearman_reg":0.5333502097
+}

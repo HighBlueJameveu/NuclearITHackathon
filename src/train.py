@@ -1,10 +1,5 @@
-"""Обучение модели SI VACV.
+"""Обучение ансамбля моделей SI VACV.
 Запуск: python -m src.train [--no-external]
-
-- SI=10000 в train = «неактивно»
-- Внешние данные фильтруются SI ∈ [0.05, 500]
-- Таргет: log10(1+SI), предсказания клипаются до 15000
-- Вес competition-данных = 3.0
 """
 import sys
 from pathlib import Path
@@ -20,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SI_CLIP_EXTERNAL = 500.0
 SI_PRED_CLIP = 15000.0
 DROP_TEST_OVERLAP = True
+SEEDS = [42, 7, 123, 2024, 999]   # 5 моделей
 
 
 def canon(smiles):
@@ -41,18 +37,12 @@ def load_training_data(use_external=True):
 
         for f in sorted((ROOT / "data/external").glob("*.csv")):
             try:
-                # Более устойчивое чтение
                 e = pd.read_csv(f, on_bad_lines="skip", engine="python")
             except Exception as ex:
-                print(f"Пропускаю файл {f.name}: {ex}")
+                print(f"Пропускаю {f.name}: {ex}")
                 continue
-
-            # Проверяем наличие нужных колонок
-            needed = {"SMILES", "IC50_uM", "CC50_uM"}
-            if not needed.issubset(set(e.columns)):
-                print(f"Пропускаю {f.name}: нет нужных колонок")
+            if not {"SMILES", "IC50_uM", "CC50_uM"} <= set(e.columns):
                 continue
-
             n0 = len(e)
             e = e.dropna(subset=["SMILES", "IC50_uM", "CC50_uM"])
             e = e[(e.IC50_uM > 0) & (e.CC50_uM > 0)]
@@ -60,7 +50,9 @@ def load_training_data(use_external=True):
             e["SI VACV"] = (e["CC50_uM"] / e["IC50_uM"]).clip(upper=SI_CLIP_EXTERNAL)
             e = e[(e["SI VACV"] >= 0.05) & (e["SI VACV"] <= SI_CLIP_EXTERNAL)]
             e["is_competition"] = False
-            e = e[["SMILES", "SI VACV", "is_competition"]]
+            e["strain"] = "unknown"
+            e["Culture"] = "unknown"
+            e = e[["SMILES", "SI VACV", "is_competition", "strain", "Culture"]]
             parts.append(e)
             print(f"External: {f.name}: {n0} -> {len(e)} rows used")
 
@@ -71,14 +63,16 @@ def main():
     use_ext = "--no-external" not in sys.argv
     tr = load_training_data(use_external=use_ext)
     comp = tr["is_competition"].to_numpy()
-    X = build(tr.SMILES)
+
+    X = build(tr, fit=True)
     y = np.log10(1.0 + tr["SI VACV"].to_numpy(dtype=float))
     groups = tr.SMILES.map(scaffold).to_numpy()
     sample_weight = np.where(comp, 3.0, 1.0)
 
+    # OOF для метрик (одна модель)
     oof = np.zeros(len(y))
     for a, b in GroupKFold(5).split(X, y, groups):
-        model = make_model()
+        model = make_model(seed=42)
         model.fit(X[a], y[a], sample_weight=sample_weight[a])
         oof[b] = model.predict(X[b])
 
@@ -86,7 +80,7 @@ def main():
     si_true = tr["SI VACV"].to_numpy(dtype=float)
 
     metrics = {
-        "mode": "SMILES + filtered external + SI=10000 inactive + pred_clip=15000",
+        "mode": "ensemble 5 seeds + strain/Culture + filtered external",
         "train_rows_total": int(len(tr)),
         "eval_rows_competition": int(comp.sum()),
         "RMSE_log10(1+SI)": float(np.sqrt(np.mean((oof[comp] - y[comp]) ** 2))),
@@ -94,13 +88,26 @@ def main():
         "MAE_SI": float(np.mean(np.abs(pred_si[comp] - si_true[comp]))),
         "Spearman": float(pd.Series(oof[comp]).corr(pd.Series(y[comp]), method="spearman")),
     }
-    print("Scaffold-CV:", metrics)
+    print("Scaffold-CV (seed=42):", metrics)
     pd.Series(metrics).to_json(ROOT / "results/cv_metrics.json", indent=2)
 
-    model = make_model()
-    model.fit(X, y, sample_weight=sample_weight)
-    joblib.dump({"model": model, "si_pred_clip": SI_PRED_CLIP}, ROOT / "models/si_model.joblib")
-    print("Saved models/si_model.joblib")
+    # ===== Ансамбль: 5 моделей =====
+    models = []
+    for seed in SEEDS:
+        print(f"Training model seed={seed} ...")
+        model = make_model(seed=seed)
+        model.fit(X, y, sample_weight=sample_weight)
+        models.append(model)
+
+    from src import features as F
+    joblib.dump({
+        "models": models,
+        "seeds": SEEDS,
+        "si_pred_clip": SI_PRED_CLIP,
+        "strain_le": F._strain_le,
+        "culture_le": F._culture_le,
+    }, ROOT / "models/si_model.joblib")
+    print(f"Saved ensemble of {len(models)} models -> models/si_model.joblib")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 {
-  "mode":"SMILES + filtered external + SI=10000 inactive + pred_clip=15000",
+  "mode":"ensemble 5 seeds + strain\/Culture + filtered external",
   "train_rows_total":320,
   "eval_rows_competition":320,
-  "RMSE_log10(1+SI)":0.7207866892,
-  "MAE_log10(1+SI)":0.5388328495,
-  "MAE_SI":210.5777558214,
-  "Spearman":0.5569492655
+  "RMSE_log10(1+SI)":0.7173893926,
+  "MAE_log10(1+SI)":0.5387352399,
+  "MAE_SI":209.4804331625,
+  "Spearman":0.546770176
 }

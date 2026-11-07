@@ -1,0 +1,9 @@
+{
+  "mode":"SMILES + strain + Culture + filtered external",
+  "train_rows_total":320,
+  "eval_rows_competition":320,
+  "RMSE_log10(1+SI)":0.7173893926,
+  "MAE_log10(1+SI)":0.5387352399,
+  "MAE_SI":209.4804331625,
+  "Spearman":0.546770176
+}
