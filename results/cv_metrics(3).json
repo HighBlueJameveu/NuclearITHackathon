@@ -1,0 +1,9 @@
+{
+  "mode":"SMILES only + external (ChEMBL + manual) + sample_weight",
+  "train_rows_total":642,
+  "eval_rows_competition":320,
+  "RMSE_log10(1+SI)":0.7437278164,
+  "MAE_log10(1+SI)":0.5586764929,
+  "MAE_SI":210.6184359534,
+  "Spearman":0.5155615679
+}

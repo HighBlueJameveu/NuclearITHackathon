@@ -1,0 +1,9 @@
+{
+  "mode":"SMILES only (descriptors+MACCS+Morgan)",
+  "train_rows_total":318,
+  "eval_rows_competition":318,
+  "RMSE_log10(1+SI)":0.7884064251,
+  "MAE_log10(1+SI)":0.6048430354,
+  "MAE_SI":211.6498474063,
+  "Spearman":0.4118030865
+}
